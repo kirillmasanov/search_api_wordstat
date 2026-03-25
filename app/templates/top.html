@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% set active = "top" %}
+{% block title %}Подбор слов{% endblock %}
+
+{% block content %}
+<section class="search-section">
+    <form id="top-form" class="search-form">
+        <div class="search-row">
+            <input type="text" name="phrase" placeholder="Введите запрос" required autofocus>
+            <button type="submit">Подобрать</button>
+        </div>
+        <details class="filters">
+            <summary>Фильтры</summary>
+            <div class="filter-row">
+                <label>Результатов:
+                    <input type="number" name="num_phrases" value="50" min="1" max="2000">
+                </label>
+                <label>Устройства:
+                    <select name="devices">
+                        <option value="">Все</option>
+                        <option value="DEVICE_DESKTOP">Десктоп</option>
+                        <option value="DEVICE_PHONE">Телефон</option>
+                        <option value="DEVICE_TABLET">Планшет</option>
+                    </select>
+                </label>
+            </div>
+        </details>
+    </form>
+</section>
+
+<section id="top-results" class="results hidden">
+    <div class="total-count">Всего показов за месяц: <strong id="total-count-value"></strong></div>
+    <div class="tables-row">
+        <div class="table-block">
+            <h3>Что искали со словом</h3>
+            <table id="results-table">
+                <thead><tr><th>Запрос</th><th>Показов</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="table-block">
+            <h3>Похожие запросы</h3>
+            <table id="associations-table">
+                <thead><tr><th>Запрос</th><th>Показов</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div id="loading" class="loading hidden">Загрузка...</div>
+<div id="error" class="error hidden"></div>
+{% endblock %}

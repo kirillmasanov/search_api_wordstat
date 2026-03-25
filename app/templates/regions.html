@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set active = "regions" %}
+{% block title %}По регионам{% endblock %}
+
+{% block content %}
+<section class="search-section">
+    <form id="regions-form" class="search-form">
+        <div class="search-row">
+            <input type="text" name="phrase" placeholder="Введите запрос" required autofocus>
+            <button type="submit">Показать</button>
+        </div>
+        <div class="filter-row">
+            <label>Группировка:
+                <select name="region_type">
+                    <option value="" selected>Все</option>
+                    <option value="REGION_CITIES">Города</option>
+                    <option value="REGION_REGIONS">Регионы</option>
+                </select>
+            </label>
+            <label>Устройства:
+                <select name="devices">
+                    <option value="">Все</option>
+                    <option value="DEVICE_DESKTOP">Десктоп</option>
+                    <option value="DEVICE_PHONE">Телефон</option>
+                    <option value="DEVICE_TABLET">Планшет</option>
+                </select>
+            </label>
+        </div>
+    </form>
+</section>
+
+<section id="regions-results" class="results hidden">
+    <table id="regions-table" class="sortable">
+        <thead>
+            <tr>
+                <th data-sort="region">Регион</th>
+                <th data-sort="count">Показов</th>
+                <th data-sort="share">Региональная доля, %</th>
+                <th data-sort="affinity">Индекс аффинитивности</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<div id="loading" class="loading hidden">Загрузка...</div>
+<div id="error" class="error hidden"></div>
+{% endblock %}

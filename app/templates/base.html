@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordstat — {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1 class="logo">Wordstat</h1>
+            <nav class="tabs">
+                <a href="/top" class="tab {% if active == 'top' %}active{% endif %}">Подбор слов</a>
+                <a href="/dynamics" class="tab {% if active == 'dynamics' %}active{% endif %}">Динамика</a>
+                <a href="/regions" class="tab {% if active == 'regions' %}active{% endif %}">По регионам</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <script src="/static/app.js"></script>
+</body>
+</html>
