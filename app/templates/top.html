@@ -15,14 +15,16 @@
                 <label>Результатов:
                     <input type="number" name="num_phrases" value="50" min="1" max="2000">
                 </label>
-                <label>Устройства:
-                    <select name="devices">
-                        <option value="">Все</option>
-                        <option value="DEVICE_DESKTOP">Десктоп</option>
-                        <option value="DEVICE_PHONE">Телефон</option>
-                        <option value="DEVICE_TABLET">Планшет</option>
-                    </select>
-                </label>
+                <div class="custom-select" data-name="devices">
+                    <div class="custom-select__trigger"><span>Все устройства</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                    <div class="custom-select__dropdown">
+                        <div class="custom-select__option selected" data-value="">Все устройства</div>
+                        <div class="custom-select__option" data-value="DEVICE_DESKTOP">Десктоп</div>
+                        <div class="custom-select__option" data-value="DEVICE_PHONE">Телефон</div>
+                        <div class="custom-select__option" data-value="DEVICE_TABLET">Планшет</div>
+                    </div>
+                    <input type="hidden" name="devices" value="">
+                </div>
             </div>
         </details>
     </form>

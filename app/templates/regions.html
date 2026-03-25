@@ -10,21 +10,25 @@
             <button type="submit">Показать</button>
         </div>
         <div class="filter-row">
-            <label>Группировка:
-                <select name="region_type">
-                    <option value="" selected>Все</option>
-                    <option value="REGION_CITIES">Города</option>
-                    <option value="REGION_REGIONS">Регионы</option>
-                </select>
-            </label>
-            <label>Устройства:
-                <select name="devices">
-                    <option value="">Все</option>
-                    <option value="DEVICE_DESKTOP">Десктоп</option>
-                    <option value="DEVICE_PHONE">Телефон</option>
-                    <option value="DEVICE_TABLET">Планшет</option>
-                </select>
-            </label>
+            <div class="custom-select" data-name="region_type">
+                <div class="custom-select__trigger"><span>Все</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                <div class="custom-select__dropdown">
+                    <div class="custom-select__option selected" data-value="">Все</div>
+                    <div class="custom-select__option" data-value="REGION_CITIES">Города</div>
+                    <div class="custom-select__option" data-value="REGION_REGIONS">Регионы</div>
+                </div>
+                <input type="hidden" name="region_type" value="">
+            </div>
+            <div class="custom-select" data-name="devices">
+                <div class="custom-select__trigger"><span>Все устройства</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                <div class="custom-select__dropdown">
+                    <div class="custom-select__option selected" data-value="">Все устройства</div>
+                    <div class="custom-select__option" data-value="DEVICE_DESKTOP">Десктоп</div>
+                    <div class="custom-select__option" data-value="DEVICE_PHONE">Телефон</div>
+                    <div class="custom-select__option" data-value="DEVICE_TABLET">Планшет</div>
+                </div>
+                <input type="hidden" name="devices" value="">
+            </div>
         </div>
     </form>
 </section>

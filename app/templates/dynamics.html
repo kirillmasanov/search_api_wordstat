@@ -10,13 +10,15 @@
             <button type="submit">Показать</button>
         </div>
         <div class="filter-row">
-            <label>Период:
-                <select name="period">
-                    <option value="PERIOD_WEEKLY" selected>По неделям</option>
-                    <option value="PERIOD_DAILY">По дням</option>
-                    <option value="PERIOD_MONTHLY">По месяцам</option>
-                </select>
-            </label>
+            <div class="custom-select" data-name="period">
+                <div class="custom-select__trigger"><span>По неделям</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                <div class="custom-select__dropdown">
+                    <div class="custom-select__option" data-value="PERIOD_DAILY">По дням</div>
+                    <div class="custom-select__option selected" data-value="PERIOD_WEEKLY">По неделям</div>
+                    <div class="custom-select__option" data-value="PERIOD_MONTHLY">По месяцам</div>
+                </div>
+                <input type="hidden" name="period" value="PERIOD_WEEKLY">
+            </div>
             <label>С:
                 <input type="date" name="from_date" required>
             </label>
@@ -27,14 +29,16 @@
         <details class="filters">
             <summary>Фильтры</summary>
             <div class="filter-row">
-                <label>Устройства:
-                    <select name="devices">
-                        <option value="">Все</option>
-                        <option value="DEVICE_DESKTOP">Десктоп</option>
-                        <option value="DEVICE_PHONE">Телефон</option>
-                        <option value="DEVICE_TABLET">Планшет</option>
-                    </select>
-                </label>
+                <div class="custom-select" data-name="devices">
+                    <div class="custom-select__trigger"><span>Все устройства</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                    <div class="custom-select__dropdown">
+                        <div class="custom-select__option selected" data-value="">Все устройства</div>
+                        <div class="custom-select__option" data-value="DEVICE_DESKTOP">Десктоп</div>
+                        <div class="custom-select__option" data-value="DEVICE_PHONE">Телефон</div>
+                        <div class="custom-select__option" data-value="DEVICE_TABLET">Планшет</div>
+                    </div>
+                    <input type="hidden" name="devices" value="">
+                </div>
             </div>
         </details>
     </form>

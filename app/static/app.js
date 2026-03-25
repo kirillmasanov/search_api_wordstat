@@ -8,6 +8,38 @@ function showLoading() { show($("#loading")); hide($("#error")); }
 function hideLoading() { hide($("#loading")); }
 function showError(msg) { const el = $("#error"); el.textContent = msg; show(el); }
 
+// ===== CUSTOM SELECT =====
+document.addEventListener("click", (e) => {
+    // Close all dropdowns if clicked outside
+    $$(".custom-select.open").forEach(s => {
+        if (!s.contains(e.target)) s.classList.remove("open");
+    });
+});
+
+$$(".custom-select").forEach(select => {
+    const trigger = select.querySelector(".custom-select__trigger");
+    const hidden = select.querySelector("input[type=hidden]");
+
+    trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Close others
+        $$(".custom-select.open").forEach(s => { if (s !== select) s.classList.remove("open"); });
+        select.classList.toggle("open");
+    });
+
+    select.querySelectorAll(".custom-select__option").forEach(opt => {
+        opt.addEventListener("click", () => {
+            select.querySelectorAll(".custom-select__option").forEach(o => o.classList.remove("selected"));
+            opt.classList.add("selected");
+            trigger.querySelector("span").textContent = opt.textContent;
+            hidden.value = opt.dataset.value;
+            select.classList.remove("open");
+            // Dispatch change event so listeners (e.g. period change) work
+            hidden.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+    });
+});
+
 function formatNumber(n) {
     return Number(n).toLocaleString("ru-RU");
 }
@@ -167,11 +199,12 @@ if (dynForm) {
                     datasets: [{
                         label: "Показов",
                         data: counts,
-                        borderColor: "#fc0",
-                        backgroundColor: "rgba(255,204,0,0.1)",
+                        borderColor: "#597BFF",
+                        backgroundColor: "rgba(89,123,255,0.08)",
                         fill: true,
                         tension: 0.3,
                         pointRadius: 3,
+                        pointBackgroundColor: "#597BFF",
                     }],
                 },
                 options: {
