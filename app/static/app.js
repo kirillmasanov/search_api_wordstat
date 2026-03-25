@@ -40,6 +40,30 @@ $$(".custom-select").forEach(select => {
     });
 });
 
+// ===== SEARCH BOX: BUTTON STATE + CLEAR =====
+$$(".search-box").forEach(box => {
+    const input = box.querySelector("input[type=text]");
+    const btn = box.querySelector("button");
+    const clear = box.querySelector(".search-clear");
+
+    function update() {
+        const hasValue = !!input.value.trim();
+        btn.disabled = !hasValue;
+        if (clear) { hasValue ? show(clear) : hide(clear); }
+    }
+
+    update();
+    input.addEventListener("input", update);
+
+    if (clear) {
+        clear.addEventListener("click", () => {
+            input.value = "";
+            update();
+            input.focus();
+        });
+    }
+});
+
 function formatNumber(n) {
     return Number(n).toLocaleString("ru-RU");
 }
