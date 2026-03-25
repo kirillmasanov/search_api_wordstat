@@ -123,8 +123,8 @@ main {
 }
 
 .search-box:focus-within {
-    border-color: var(--color-border-focus);
-    box-shadow: 0 0 0 3px rgba(89, 123, 255, 0.15);
+    border-color: rgba(89, 123, 255, 0.4);
+    box-shadow: none;
 }
 
 .search-box input[type="text"] {
@@ -159,7 +159,7 @@ main {
 }
 
 .search-box button:hover:not(:disabled) {
-    color: var(--color-text);
+    color: var(--color-text-secondary);
 }
 
 .search-box button:disabled {
@@ -201,6 +201,11 @@ button {
 
 button:hover {
     background: var(--color-primary-hover);
+}
+
+.search-box button,
+.search-box button:hover {
+    background: transparent;
 }
 
 button:active {
