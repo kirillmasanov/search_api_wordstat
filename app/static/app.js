@@ -210,11 +210,39 @@ if (dynForm) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    interaction: { mode: "index", intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => "Показов: " + formatNumber(ctx.raw),
+                            },
+                        },
+                        crosshair: false,
+                    },
                     scales: {
                         y: { beginAtZero: true, ticks: { callback: v => formatNumber(v) } },
                     },
                 },
+                plugins: [{
+                    id: "verticalLine",
+                    afterDraw(chart) {
+                        const active = chart.tooltip?.getActiveElements();
+                        if (active && active.length) {
+                            const x = active[0].element.x;
+                            const { top, bottom } = chart.chartArea;
+                            const ctx = chart.ctx;
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(x, top);
+                            ctx.lineTo(x, bottom);
+                            ctx.lineWidth = 1;
+                            ctx.strokeStyle = "rgba(89,123,255,0.3)";
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    },
+                }],
             });
 
             fillTable("#dynamics-table", results.map(r => {
