@@ -1,0 +1,8 @@
+.venv
+__pycache__
+*.py[oc]
+.env
+.git
+.gitignore
+.dockerignore
+task.md

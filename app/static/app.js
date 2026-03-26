@@ -82,8 +82,10 @@ function fillTable(tableId, rows) {
     });
 }
 
+const ROOT = window.__ROOT_PATH__ || "";
+
 async function apiPost(url, body) {
-    const resp = await fetch(url, {
+    const resp = await fetch(ROOT + url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -295,7 +297,7 @@ let regionNames = {};
 const regForm = $("#regions-form");
 if (regForm) {
     // Load region names
-    fetch("/api/regions-tree")
+    fetch(ROOT + "/api/regions-tree")
         .then(r => r.json())
         .then(data => {
             function walk(nodes) {
