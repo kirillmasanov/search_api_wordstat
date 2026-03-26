@@ -5,17 +5,15 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.config import settings
 from app.routes.api import router as api_router
 
 BASE_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="Wordstat", root_path=settings.root_path)
+app = FastAPI(title="Wordstat")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.include_router(api_router)
 
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
-templates.env.globals["root_path"] = settings.root_path
 
 
 @app.get("/health")
@@ -24,8 +22,8 @@ async def health():
 
 
 @app.get("/")
-async def index(request: Request):
-    return RedirectResponse(url=request.scope.get("root_path", "") + "/top")
+async def index():
+    return RedirectResponse(url="top")
 
 
 @app.get("/top")

@@ -82,10 +82,8 @@ function fillTable(tableId, rows) {
     });
 }
 
-const ROOT = window.__ROOT_PATH__ || "";
-
 async function apiPost(url, body) {
-    const resp = await fetch(ROOT + url, {
+    const resp = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -118,7 +116,7 @@ if (topForm) {
         topForm.querySelector("button").disabled = true;
 
         try {
-            const data = await apiPost("/api/top", body);
+            const data = await apiPost("api/top", body);
             $("#total-count-value").textContent = formatNumber(data.totalCount || 0);
 
             fillTable("#results-table",
@@ -208,7 +206,7 @@ if (dynForm) {
         dynForm.querySelector("button").disabled = true;
 
         try {
-            const data = await apiPost("/api/dynamics", body);
+            const data = await apiPost("api/dynamics", body);
             const results = data.results || [];
 
             const labels = results.map(r => {
@@ -297,7 +295,7 @@ let regionNames = {};
 const regForm = $("#regions-form");
 if (regForm) {
     // Load region names
-    fetch(ROOT + "/api/regions-tree")
+    fetch("api/regions-tree")
         .then(r => r.json())
         .then(data => {
             function walk(nodes) {
@@ -326,7 +324,7 @@ if (regForm) {
         regForm.querySelector("button").disabled = true;
 
         try {
-            const data = await apiPost("/api/regions", body);
+            const data = await apiPost("api/regions", body);
             regionsData = (data.results || []).map(r => ({
                 region: regionNames[r.region] || r.region,
                 count: Number(r.count),
