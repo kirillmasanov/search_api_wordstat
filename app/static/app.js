@@ -371,7 +371,7 @@ function initDateRangePicker(container, getPeriod, onChange) {
         if (fromDate && toDate && onChange) onChange();
     }
 
-    function setDates(from, to) {
+    function setDates(from, to, silent) {
         fromDate = from;
         toDate = to;
         viewYear = from.getFullYear();
@@ -379,6 +379,7 @@ function initDateRangePicker(container, getPeriod, onChange) {
         selecting = "from";
         updateDisplay();
         render();
+        if (!silent && fromDate && toDate && onChange) onChange();
     }
 
     // Navigation
@@ -410,7 +411,7 @@ if (dynForm) {
         () => { if (dynForm.querySelector("[name=phrase]").value.trim()) submitDynamics(); }
     );
 
-    function setDefaultDates() {
+    function setDefaultDates(silent) {
         const today = new Date();
         const period = dynForm.querySelector("[name=period]").value;
         const from = new Date(today);
@@ -427,11 +428,11 @@ if (dynForm) {
             }
         }
 
-        picker.setDates(from, today);
+        picker.setDates(from, today, silent);
     }
 
-    setDefaultDates();
-    dynForm.querySelector("[name=period]").addEventListener("change", setDefaultDates);
+    setDefaultDates(true);
+    dynForm.querySelector("[name=period]").addEventListener("change", () => setDefaultDates());
 
     async function submitDynamics() {
         const fd = new FormData(dynForm);
