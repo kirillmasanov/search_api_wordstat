@@ -442,7 +442,29 @@ if (dynForm) {
         picker.setDates(from, today, silent);
     }
 
-    setDefaultDates(true);
+    // Restore saved state or use defaults
+    const savedPeriod = localStorage.getItem("wordstat_period");
+    const savedFrom = localStorage.getItem("wordstat_from");
+    const savedTo = localStorage.getItem("wordstat_to");
+    if (savedPeriod) {
+        // Update custom-select to match saved period
+        const periodSelect = dynForm.querySelector(".custom-select[data-name=period]");
+        const hidden = periodSelect.querySelector("input[type=hidden]");
+        hidden.value = savedPeriod;
+        const opts = periodSelect.querySelectorAll(".custom-select__option");
+        opts.forEach(o => {
+            o.classList.toggle("selected", o.dataset.value === savedPeriod);
+            if (o.dataset.value === savedPeriod) {
+                periodSelect.querySelector(".custom-select__trigger span").textContent = o.textContent;
+            }
+        });
+    }
+    if (savedFrom && savedTo) {
+        picker.setDates(new Date(savedFrom + "T00:00:00"), new Date(savedTo + "T00:00:00"), true);
+    } else {
+        setDefaultDates(true);
+    }
+
     dynForm.querySelector("[name=period]").addEventListener("change", () => setDefaultDates());
     dynForm.querySelector("[name=devices]").addEventListener("change", () => {
         if (dynForm.querySelector("[name=phrase]").value.trim()) submitDynamics();
@@ -483,6 +505,9 @@ if (dynForm) {
         const dev = fd.get("devices");
         if (dev) body.devices = [dev];
         lastDynamicsBody = body;
+        localStorage.setItem("wordstat_period", period);
+        localStorage.setItem("wordstat_from", fmt(fromDate));
+        if (toDate) localStorage.setItem("wordstat_to", fmt(toDate));
 
         hideLoading();
         hide($("#dynamics-results"));
@@ -737,8 +762,11 @@ if (rawForm) {
             body = null;
         } else if (method === "dynamics") {
             url = "api/dynamics";
-            if (lastDynamicsBody) {
-                body = { ...lastDynamicsBody, phrase };
+            const sp = localStorage.getItem("wordstat_period") || "PERIOD_WEEKLY";
+            const sf = localStorage.getItem("wordstat_from");
+            const st = localStorage.getItem("wordstat_to");
+            if (sf && st) {
+                body = { phrase, period: sp, from_date: sf + "T00:00:00Z", to_date: st + "T23:59:59Z" };
             } else {
                 const today = new Date();
                 const toSun = new Date(today);
@@ -749,7 +777,7 @@ if (rawForm) {
                 const dow = from.getDay();
                 from.setDate(from.getDate() + (dow === 0 ? -6 : 1 - dow));
                 const fmt = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-                body = { phrase, period: "PERIOD_WEEKLY", from_date: fmt(from) + "T00:00:00Z", to_date: fmt(toSun) + "T23:59:59Z" };
+                body = { phrase, period: sp, from_date: fmt(from) + "T00:00:00Z", to_date: fmt(toSun) + "T23:59:59Z" };
             }
         } else {
             url = "api/" + method;
