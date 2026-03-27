@@ -519,6 +519,12 @@ button:disabled {
 .cal-day.other-month { color: var(--color-text-muted); }
 .cal-day.today { font-weight: 700; }
 
+.cal-day.disabled {
+    color: var(--color-border);
+    cursor: default;
+    pointer-events: none;
+}
+
 .cal-day.selected {
     background: var(--color-primary);
     color: #fff;

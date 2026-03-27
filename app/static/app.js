@@ -150,7 +150,7 @@ if (topForm) {
 }
 
 // ===== DATE RANGE PICKER =====
-function initDateRangePicker(container, getPeriod) {
+function initDateRangePicker(container, getPeriod, onChange) {
     const trigger = container.querySelector(".date-range-trigger");
     const triggerText = container.querySelector(".date-range-text");
     const dropdown = container.querySelector(".date-range-dropdown");
@@ -230,6 +230,22 @@ function initDateRangePicker(container, getPeriod) {
             if (d.getMonth() !== viewMonth) day.classList.add("other-month");
             if (sameDay(d, today)) day.classList.add("today");
 
+            // Disable future dates
+            if (d.getTime() > today.getTime()) day.classList.add("disabled");
+            if (period === "PERIOD_DAILY") {
+                // Can't select start older than 60 days ago
+                const minDaily = new Date(today);
+                minDaily.setDate(minDaily.getDate() - 59);
+                if (d.getTime() < minDaily.getTime()) day.classList.add("disabled");
+                // When selecting end: limit to 59 days from start
+                if (selecting === "to" && fromDate) {
+                    const maxDate = new Date(fromDate);
+                    maxDate.setDate(maxDate.getDate() + 59);
+                    if (d.getTime() > maxDate.getTime()) day.classList.add("disabled");
+                    if (d.getTime() < fromDate.getTime()) day.classList.add("disabled");
+                }
+            }
+
             // Highlight selected range
             if (fromDate && toDate) {
                 const t = d.getTime();
@@ -282,13 +298,13 @@ function initDateRangePicker(container, getPeriod) {
     calDays.addEventListener("click", (e) => {
         e.stopPropagation();
         const day = e.target.closest(".cal-day");
-        if (!day || !day.dataset.date) return;
+        if (!day || !day.dataset.date || day.classList.contains("disabled")) return;
         onDayClick(new Date(day.dataset.date + "T00:00:00"));
     });
 
     calDays.addEventListener("mouseover", (e) => {
         const day = e.target.closest(".cal-day");
-        if (!day || !day.dataset.date) return;
+        if (!day || !day.dataset.date || day.classList.contains("disabled")) return;
         hoverDate = new Date(day.dataset.date + "T00:00:00");
         updateHover();
     });
@@ -335,10 +351,13 @@ function initDateRangePicker(container, getPeriod) {
                 fromDate = new Date(d);
                 toDate = null;
                 selecting = "to";
+                render(); // re-render to show disabled dates
             } else {
                 if (d.getTime() < fromDate.getTime()) {
                     fromDate = new Date(d);
                     toDate = null;
+                    selecting = "to";
+                    render();
                 } else {
                     toDate = new Date(d);
                     selecting = "from";
@@ -349,6 +368,7 @@ function initDateRangePicker(container, getPeriod) {
 
         updateDisplay();
         render();
+        if (fromDate && toDate && onChange) onChange();
     }
 
     function setDates(from, to) {
@@ -386,7 +406,8 @@ const dynForm = $("#dynamics-form");
 if (dynForm) {
     const picker = initDateRangePicker(
         $("#date-range-picker"),
-        () => dynForm.querySelector("[name=period]").value
+        () => dynForm.querySelector("[name=period]").value,
+        () => { if (dynForm.querySelector("[name=phrase]").value.trim()) submitDynamics(); }
     );
 
     function setDefaultDates() {
@@ -412,8 +433,7 @@ if (dynForm) {
     setDefaultDates();
     dynForm.querySelector("[name=period]").addEventListener("change", setDefaultDates);
 
-    dynForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    async function submitDynamics() {
         const fd = new FormData(dynForm);
         const period = fd.get("period");
         let fromDate = new Date(fd.get("from_date"));
@@ -548,24 +568,6 @@ if (dynForm) {
                 }],
             });
 
-            // Toggle handlers
-            $$(".chart-toggle").forEach(toggle => {
-                toggle.addEventListener("click", () => {
-                    toggle.classList.toggle("active");
-                    const idx = toggle.dataset.dataset === "count" ? 0 : 1;
-                    const visible = toggle.classList.contains("active");
-                    dynamicsChart.setDatasetVisibility(idx, visible);
-                    const axisId = idx === 0 ? "y" : "y1";
-                    dynamicsChart.options.scales[axisId].display = visible;
-                    // Ensure grid lines stay on whichever axis is visible
-                    const yVis = dynamicsChart.options.scales.y.display !== false;
-                    const y1Vis = dynamicsChart.options.scales.y1.display !== false;
-                    dynamicsChart.options.scales.y.grid.drawOnChartArea = yVis;
-                    dynamicsChart.options.scales.y1.grid.drawOnChartArea = y1Vis && !yVis;
-                    dynamicsChart.update();
-                });
-            });
-
             fillTable("#dynamics-table", results.map(r => {
                 const d = new Date(r.date);
                 return [
@@ -582,10 +584,32 @@ if (dynForm) {
             hideLoading();
             dynForm.querySelector("button").disabled = false;
         }
+    }
+
+    $$(".chart-toggle").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+            if (!dynamicsChart) return;
+            toggle.classList.toggle("active");
+            const idx = toggle.dataset.dataset === "count" ? 0 : 1;
+            const visible = toggle.classList.contains("active");
+            dynamicsChart.setDatasetVisibility(idx, visible);
+            const axisId = idx === 0 ? "y" : "y1";
+            dynamicsChart.options.scales[axisId].display = visible;
+            const yVis = dynamicsChart.options.scales.y.display !== false;
+            const y1Vis = dynamicsChart.options.scales.y1.display !== false;
+            dynamicsChart.options.scales.y.grid.drawOnChartArea = yVis;
+            dynamicsChart.options.scales.y1.grid.drawOnChartArea = y1Vis && !yVis;
+            dynamicsChart.update();
+        });
+    });
+
+    dynForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        submitDynamics();
     });
 
     if (dynForm.querySelector("[name=phrase]").value.trim()) {
-        dynForm.requestSubmit();
+        submitDynamics();
     }
 }
 
