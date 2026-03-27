@@ -40,11 +40,15 @@ $$(".custom-select").forEach(select => {
     });
 });
 
-// ===== SEARCH BOX: BUTTON STATE + CLEAR =====
+// ===== SEARCH BOX: BUTTON STATE + CLEAR + SHARED PHRASE =====
 $$(".search-box").forEach(box => {
     const input = box.querySelector("input[type=text]");
     const btn = box.querySelector("button");
     const clear = box.querySelector(".search-clear");
+
+    // Restore phrase from localStorage
+    const saved = localStorage.getItem("wordstat_phrase");
+    if (saved && !input.value) input.value = saved;
 
     function update() {
         const hasValue = !!input.value.trim();
@@ -55,9 +59,15 @@ $$(".search-box").forEach(box => {
     update();
     input.addEventListener("input", update);
 
+    // Save phrase on form submit
+    box.closest("form").addEventListener("submit", () => {
+        localStorage.setItem("wordstat_phrase", input.value.trim());
+    });
+
     if (clear) {
         clear.addEventListener("click", () => {
             input.value = "";
+            localStorage.removeItem("wordstat_phrase");
             update();
             input.focus();
         });
@@ -132,6 +142,241 @@ if (topForm) {
             topForm.querySelector("button").disabled = false;
         }
     });
+
+    // Auto-submit if phrase saved
+    if (topForm.querySelector("[name=phrase]").value.trim()) {
+        topForm.requestSubmit();
+    }
+}
+
+// ===== DATE RANGE PICKER =====
+function initDateRangePicker(container, getPeriod) {
+    const trigger = container.querySelector(".date-range-trigger");
+    const triggerText = container.querySelector(".date-range-text");
+    const dropdown = container.querySelector(".date-range-dropdown");
+    const calDays = container.querySelector(".cal-days");
+    const calTitle = container.querySelector(".cal-title");
+    const calPrev = container.querySelector(".cal-prev");
+    const calNext = container.querySelector(".cal-next");
+    const fromInput = container.querySelector("[name=from_date]");
+    const toInput = container.querySelector("[name=to_date]");
+
+    const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь",
+                    "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+
+    let viewYear, viewMonth;
+    let fromDate = null, toDate = null;
+    let selecting = "from"; // "from" or "to"
+    let hoverDate = null;
+
+    function fmtDisplay(d) {
+        return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+    function fmtISO(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + dd;
+    }
+    function sameDay(a, b) { return a && b && fmtISO(a) === fmtISO(b); }
+
+    function getMonday(d) {
+        const r = new Date(d);
+        const dow = r.getDay();
+        r.setDate(r.getDate() + (dow === 0 ? -6 : 1 - dow));
+        return r;
+    }
+    function getSunday(d) {
+        const r = new Date(d);
+        const dow = r.getDay();
+        if (dow !== 0) r.setDate(r.getDate() + (7 - dow));
+        return r;
+    }
+
+    function updateDisplay() {
+        if (fromDate && toDate) {
+            triggerText.textContent = fmtDisplay(fromDate) + " — " + fmtDisplay(toDate);
+        } else if (fromDate) {
+            triggerText.textContent = fmtDisplay(fromDate) + " — ...";
+        } else {
+            triggerText.textContent = "Выберите даты";
+        }
+        fromInput.value = fromDate ? fmtISO(fromDate) : "";
+        toInput.value = toDate ? fmtISO(toDate) : "";
+    }
+
+    function render() {
+        const period = getPeriod();
+        calTitle.textContent = MONTHS[viewMonth] + " " + viewYear;
+        calDays.innerHTML = "";
+
+        const firstDay = new Date(viewYear, viewMonth, 1);
+        let startOffset = firstDay.getDay() - 1;
+        if (startOffset < 0) startOffset = 6;
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - startOffset);
+
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        for (let i = 0; i < 42; i++) {
+            const d = new Date(startDate);
+            d.setDate(d.getDate() + i);
+            const day = document.createElement("div");
+            day.classList.add("cal-day");
+            day.textContent = d.getDate();
+            day.dataset.date = fmtISO(d);
+
+            if (d.getMonth() !== viewMonth) day.classList.add("other-month");
+            if (sameDay(d, today)) day.classList.add("today");
+
+            // Highlight selected range
+            if (fromDate && toDate) {
+                const t = d.getTime();
+                const ft = fromDate.getTime();
+                const tt = toDate.getTime();
+                if (period === "PERIOD_WEEKLY") {
+                    // Highlight full weeks within range
+                    const dMon = getMonday(d);
+                    const dSun = getSunday(d);
+                    if (dMon.getTime() >= ft && dSun.getTime() <= tt) {
+                        day.classList.add("in-range");
+                        if (d.getDay() === 1) day.classList.add("week-start");
+                        if (d.getDay() === 0) day.classList.add("week-end");
+                    }
+                } else {
+                    if (sameDay(d, fromDate)) day.classList.add("range-start");
+                    else if (sameDay(d, toDate)) day.classList.add("range-end");
+                    else if (t > ft && t < tt) day.classList.add("in-range");
+                }
+            } else if (fromDate && sameDay(d, fromDate)) {
+                day.classList.add("selected");
+            }
+
+            calDays.appendChild(day);
+
+            // Stop if we've filled enough rows and passed the month
+            if (i >= 35 && d.getMonth() !== viewMonth) break;
+        }
+    }
+
+    // Update week hover highlight without rebuilding DOM
+    function updateHover() {
+        const period = getPeriod();
+        calDays.querySelectorAll(".cal-day").forEach(el => {
+            el.classList.remove("week-hover");
+            if (period === "PERIOD_WEEKLY" && hoverDate && el.dataset.date) {
+                const d = new Date(el.dataset.date + "T00:00:00");
+                const hMon = getMonday(hoverDate);
+                const hSun = getSunday(hoverDate);
+                if (d.getTime() >= hMon.getTime() && d.getTime() <= hSun.getTime()) {
+                    el.classList.add("week-hover");
+                    if (sameDay(d, hMon)) el.classList.add("week-start");
+                    if (sameDay(d, hSun)) el.classList.add("week-end");
+                }
+            }
+        });
+    }
+
+    // Event delegation
+    calDays.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const day = e.target.closest(".cal-day");
+        if (!day || !day.dataset.date) return;
+        onDayClick(new Date(day.dataset.date + "T00:00:00"));
+    });
+
+    calDays.addEventListener("mouseover", (e) => {
+        const day = e.target.closest(".cal-day");
+        if (!day || !day.dataset.date) return;
+        hoverDate = new Date(day.dataset.date + "T00:00:00");
+        updateHover();
+    });
+
+    function onDayClick(d) {
+        const period = getPeriod();
+
+        if (period === "PERIOD_WEEKLY") {
+            // Select whole week
+            if (selecting === "from") {
+                fromDate = getMonday(d);
+                toDate = null;
+                selecting = "to";
+            } else {
+                const clickSun = getSunday(d);
+                if (clickSun.getTime() < fromDate.getTime()) {
+                    fromDate = getMonday(d);
+                    toDate = null;
+                } else {
+                    toDate = clickSun;
+                    selecting = "from";
+                    setTimeout(() => container.classList.remove("open"), 200);
+                }
+            }
+        } else if (period === "PERIOD_MONTHLY") {
+            if (selecting === "from") {
+                fromDate = new Date(d.getFullYear(), d.getMonth(), 1);
+                toDate = null;
+                selecting = "to";
+            } else {
+                const endMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                if (endMonth.getTime() < fromDate.getTime()) {
+                    fromDate = new Date(d.getFullYear(), d.getMonth(), 1);
+                    toDate = null;
+                } else {
+                    toDate = endMonth;
+                    selecting = "from";
+                    setTimeout(() => container.classList.remove("open"), 200);
+                }
+            }
+        } else {
+            // Daily
+            if (selecting === "from") {
+                fromDate = new Date(d);
+                toDate = null;
+                selecting = "to";
+            } else {
+                if (d.getTime() < fromDate.getTime()) {
+                    fromDate = new Date(d);
+                    toDate = null;
+                } else {
+                    toDate = new Date(d);
+                    selecting = "from";
+                    setTimeout(() => container.classList.remove("open"), 200);
+                }
+            }
+        }
+
+        updateDisplay();
+        render();
+    }
+
+    function setDates(from, to) {
+        fromDate = from;
+        toDate = to;
+        viewYear = from.getFullYear();
+        viewMonth = from.getMonth();
+        selecting = "from";
+        updateDisplay();
+        render();
+    }
+
+    // Navigation
+    calPrev.addEventListener("click", (e) => { e.stopPropagation(); viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; } render(); });
+    calNext.addEventListener("click", (e) => { e.stopPropagation(); viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; } render(); });
+
+    // Open/close
+    trigger.addEventListener("click", (e) => { e.stopPropagation(); container.classList.toggle("open"); });
+    document.addEventListener("click", (e) => { if (!container.contains(e.target)) container.classList.remove("open"); });
+    calDays.addEventListener("mouseleave", () => { hoverDate = null; updateHover(); });
+
+    // Init with current month
+    const now = new Date();
+    viewYear = now.getFullYear();
+    viewMonth = now.getMonth();
+    render();
+
+    return { setDates, getPeriod };
 }
 
 // ===== DYNAMICS =====
@@ -139,6 +384,11 @@ let dynamicsChart = null;
 
 const dynForm = $("#dynamics-form");
 if (dynForm) {
+    const picker = initDateRangePicker(
+        $("#date-range-picker"),
+        () => dynForm.querySelector("[name=period]").value
+    );
+
     function setDefaultDates() {
         const today = new Date();
         const period = dynForm.querySelector("[name=period]").value;
@@ -156,8 +406,7 @@ if (dynForm) {
             }
         }
 
-        dynForm.querySelector("[name=from_date]").value = from.toISOString().slice(0, 10);
-        dynForm.querySelector("[name=to_date]").value = today.toISOString().slice(0, 10);
+        picker.setDates(from, today);
     }
 
     setDefaultDates();
@@ -214,22 +463,37 @@ if (dynForm) {
                 return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
             });
             const counts = results.map(r => Number(r.count));
+            const shares = results.map(r => r.share != null ? r.share * 100 : null);
 
             if (dynamicsChart) dynamicsChart.destroy();
             dynamicsChart = new Chart($("#dynamics-chart"), {
                 type: "line",
                 data: {
                     labels,
-                    datasets: [{
-                        label: "Показов",
-                        data: counts,
-                        borderColor: "#597BFF",
-                        backgroundColor: "rgba(89,123,255,0.08)",
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 3,
-                        pointBackgroundColor: "#597BFF",
-                    }],
+                    datasets: [
+                        {
+                            label: "Число запросов",
+                            data: counts,
+                            borderColor: "#597BFF",
+                            backgroundColor: "rgba(89,123,255,0.08)",
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: "#597BFF",
+                            yAxisID: "y",
+                        },
+                        {
+                            label: "Доля от всех запросов",
+                            data: shares,
+                            borderColor: "#E45050",
+                            backgroundColor: "rgba(228,80,80,0.08)",
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: "#E45050",
+                            yAxisID: "y1",
+                        },
+                    ],
                 },
                 options: {
                     responsive: true,
@@ -239,13 +503,28 @@ if (dynForm) {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: ctx => "Показов: " + formatNumber(ctx.raw),
+                                label: ctx => {
+                                    if (ctx.datasetIndex === 0) return "Запросов: " + formatNumber(ctx.raw);
+                                    return "Доля: " + (ctx.raw != null ? ctx.raw.toFixed(4) + "%" : "—");
+                                },
                             },
                         },
-                        crosshair: false,
                     },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: v => formatNumber(v) } },
+                        y: {
+                            type: "linear",
+                            position: "left",
+                            beginAtZero: true,
+                            ticks: { callback: v => formatNumber(v), color: "#597BFF" },
+                            grid: { drawOnChartArea: true },
+                        },
+                        y1: {
+                            type: "linear",
+                            position: "right",
+                            beginAtZero: true,
+                            ticks: { callback: v => v.toFixed(4) + "%", color: "#E45050" },
+                            grid: { drawOnChartArea: false },
+                        },
                     },
                 },
                 plugins: [{
@@ -261,12 +540,30 @@ if (dynForm) {
                             ctx.moveTo(x, top);
                             ctx.lineTo(x, bottom);
                             ctx.lineWidth = 1;
-                            ctx.strokeStyle = "rgba(89,123,255,0.3)";
+                            ctx.strokeStyle = "rgba(0,0,0,0.15)";
                             ctx.stroke();
                             ctx.restore();
                         }
                     },
                 }],
+            });
+
+            // Toggle handlers
+            $$(".chart-toggle").forEach(toggle => {
+                toggle.addEventListener("click", () => {
+                    toggle.classList.toggle("active");
+                    const idx = toggle.dataset.dataset === "count" ? 0 : 1;
+                    const visible = toggle.classList.contains("active");
+                    dynamicsChart.setDatasetVisibility(idx, visible);
+                    const axisId = idx === 0 ? "y" : "y1";
+                    dynamicsChart.options.scales[axisId].display = visible;
+                    // Ensure grid lines stay on whichever axis is visible
+                    const yVis = dynamicsChart.options.scales.y.display !== false;
+                    const y1Vis = dynamicsChart.options.scales.y1.display !== false;
+                    dynamicsChart.options.scales.y.grid.drawOnChartArea = yVis;
+                    dynamicsChart.options.scales.y1.grid.drawOnChartArea = y1Vis && !yVis;
+                    dynamicsChart.update();
+                });
             });
 
             fillTable("#dynamics-table", results.map(r => {
@@ -286,6 +583,10 @@ if (dynForm) {
             dynForm.querySelector("button").disabled = false;
         }
     });
+
+    if (dynForm.querySelector("[name=phrase]").value.trim()) {
+        dynForm.requestSubmit();
+    }
 }
 
 // ===== REGIONS =====
@@ -360,6 +661,10 @@ if (regForm) {
             renderRegionsTable();
         });
     });
+
+    if (regForm.querySelector("[name=phrase]").value.trim()) {
+        regForm.requestSubmit();
+    }
 }
 
 function renderRegionsTable() {

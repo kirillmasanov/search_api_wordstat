@@ -20,12 +20,25 @@
                 </div>
                 <input type="hidden" name="period" value="PERIOD_WEEKLY">
             </div>
-            <label>С:
-                <input type="date" name="from_date" required>
-            </label>
-            <label>По:
-                <input type="date" name="to_date">
-            </label>
+            <div class="date-range-picker" id="date-range-picker">
+                <div class="date-range-trigger">
+                    <span class="date-range-text"></span>
+                    <svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+                </div>
+                <div class="date-range-dropdown">
+                    <div class="cal-header">
+                        <span class="cal-prev">&lsaquo;</span>
+                        <span class="cal-title"></span>
+                        <span class="cal-next">&rsaquo;</span>
+                    </div>
+                    <div class="cal-weekdays">
+                        <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span><span>ПТ</span><span>СБ</span><span>ВС</span>
+                    </div>
+                    <div class="cal-days"></div>
+                </div>
+                <input type="hidden" name="from_date">
+                <input type="hidden" name="to_date">
+            </div>
         </div>
         <details class="filters">
             <summary>Фильтры</summary>
@@ -46,11 +59,21 @@
 </section>
 
 <section id="dynamics-results" class="results hidden">
+    <div class="chart-toggles">
+        <label class="chart-toggle active" data-dataset="count">
+            <span class="toggle-dot toggle-dot--blue"></span>
+            Число запросов
+        </label>
+        <label class="chart-toggle active" data-dataset="share">
+            <span class="toggle-dot toggle-dot--red"></span>
+            Доля от всех запросов
+        </label>
+    </div>
     <div class="chart-container">
         <canvas id="dynamics-chart"></canvas>
     </div>
     <table id="dynamics-table">
-        <thead><tr><th>Дата</th><th>Показов</th><th>Доля</th></tr></thead>
+        <thead><tr><th>Период</th><th>Число запросов</th><th>Доля от всех запросов, %</th></tr></thead>
         <tbody></tbody>
     </table>
 </section>
