@@ -100,7 +100,10 @@ async function apiPost(url, body) {
     });
     if (!resp.ok) {
         let detail;
-        try { detail = (await resp.json()).detail; } catch { detail = await resp.text(); }
+        try {
+            const err = await resp.json();
+            detail = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail || err);
+        } catch { detail = await resp.text(); }
         throw new Error(detail || `Ошибка ${resp.status}`);
     }
     return resp.json();
@@ -409,6 +412,7 @@ function initDateRangePicker(container, getPeriod, onChange) {
 
 // ===== DYNAMICS =====
 let dynamicsChart = null;
+let lastDynamicsBody = null;
 
 const dynForm = $("#dynamics-form");
 if (dynForm) {
@@ -478,6 +482,7 @@ if (dynForm) {
         if (toDate) body.to_date = fmt(toDate) + "T23:59:59Z";
         const dev = fd.get("devices");
         if (dev) body.devices = [dev];
+        lastDynamicsBody = body;
 
         hideLoading();
         hide($("#dynamics-results"));
@@ -716,4 +721,88 @@ function renderRegionsTable() {
         r.share != null ? (r.share * 100).toFixed(4) + "%" : "—",
         r.affinity != null ? r.affinity.toFixed(2) : "—",
     ]));
+}
+
+// ===== RAW JSON =====
+const rawForm = $("#raw-form");
+if (rawForm) {
+    async function submitRaw() {
+        const fd = new FormData(rawForm);
+        const phrase = fd.get("phrase");
+        const method = fd.get("api_method");
+
+        let url, body;
+        if (method === "regions-tree") {
+            url = "api/regions-tree";
+            body = null;
+        } else if (method === "dynamics") {
+            url = "api/dynamics";
+            if (lastDynamicsBody) {
+                body = { ...lastDynamicsBody, phrase };
+            } else {
+                const today = new Date();
+                const toSun = new Date(today);
+                const td = toSun.getDay();
+                if (td !== 0) toSun.setDate(toSun.getDate() - td);
+                const from = new Date(toSun);
+                from.setMonth(from.getMonth() - 6);
+                const dow = from.getDay();
+                from.setDate(from.getDate() + (dow === 0 ? -6 : 1 - dow));
+                const fmt = d => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+                body = { phrase, period: "PERIOD_WEEKLY", from_date: fmt(from) + "T00:00:00Z", to_date: fmt(toSun) + "T23:59:59Z" };
+            }
+        } else {
+            url = "api/" + method;
+            body = { phrase };
+        }
+
+        hideLoading();
+        hide($("#raw-results"));
+        hide($("#error"));
+        showLoading();
+
+        try {
+            let data;
+            if (body) {
+                data = await apiPost(url, body);
+            } else {
+                const resp = await fetch(url);
+                data = await resp.json();
+            }
+            $("#raw-json").textContent = JSON.stringify(data, null, 2);
+            show($("#raw-results"));
+        } catch (err) {
+            showError(err.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    rawForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        submitRaw();
+    });
+
+    rawForm.querySelector("[name=api_method]").addEventListener("change", () => {
+        const method = rawForm.querySelector("[name=api_method]").value;
+        const input = rawForm.querySelector("[name=phrase]");
+        const btn = rawForm.querySelector("button");
+        if (method === "regions-tree") {
+            input.removeAttribute("required");
+            btn.disabled = false;
+            submitRaw();
+        } else {
+            input.setAttribute("required", "");
+            btn.disabled = !input.value.trim();
+            if (input.value.trim()) submitRaw();
+        }
+    });
+
+    $("#raw-copy").addEventListener("click", () => {
+        navigator.clipboard.writeText($("#raw-json").textContent);
+    });
+
+    if (rawForm.querySelector("[name=phrase]").value.trim()) {
+        submitRaw();
+    }
 }

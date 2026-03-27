@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set active = "raw" %}
+{% block title %}API ответ{% endblock %}
+
+{% block content %}
+<section class="search-section">
+    <form id="raw-form" class="search-form">
+        <div class="search-box">
+            <input type="text" name="phrase" placeholder="Введите слово или словосочетание" required autofocus autocomplete="off">
+            <span class="search-clear hidden" aria-label="Очистить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+            <button type="submit" aria-label="Найти"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="filter-row" style="margin-top: 14px;">
+            <div class="custom-select" data-name="api_method">
+                <div class="custom-select__trigger"><span>getTop</span><svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></div>
+                <div class="custom-select__dropdown">
+                    <div class="custom-select__option selected" data-value="top">getTop</div>
+                    <div class="custom-select__option" data-value="dynamics">getDynamics</div>
+                    <div class="custom-select__option" data-value="regions">getRegionsDistribution</div>
+                    <div class="custom-select__option" data-value="regions-tree">getRegionsTree</div>
+                </div>
+                <input type="hidden" name="api_method" value="top">
+            </div>
+        </div>
+    </form>
+</section>
+
+<section id="raw-results" class="results hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="total-count">Ответ API</span>
+        <button type="button" id="raw-copy" style="padding: 6px 16px; font-size: 12px;">Копировать</button>
+    </div>
+    <pre id="raw-json" style="background: var(--color-bg); border-radius: var(--radius-md); padding: 16px; overflow: auto; max-height: 600px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;"></pre>
+</section>
+
+<div id="loading" class="loading hidden">Загрузка...</div>
+<div id="error" class="error hidden"></div>
+{% endblock %}

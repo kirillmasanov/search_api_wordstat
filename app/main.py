@@ -39,3 +39,8 @@ async def dynamics_page(request: Request):
 @app.get("/regions")
 async def regions_page(request: Request):
     return templates.TemplateResponse(request, "regions.html")
+
+
+@app.get("/raw")
+async def raw_page(request: Request):
+    return templates.TemplateResponse(request, "raw.html")
