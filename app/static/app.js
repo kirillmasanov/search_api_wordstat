@@ -143,6 +143,13 @@ if (topForm) {
         }
     });
 
+    // Auto-submit on filter change
+    topForm.querySelectorAll(".custom-select input[type=hidden], input[name=num_phrases]").forEach(el => {
+        el.addEventListener("change", () => {
+            if (topForm.querySelector("[name=phrase]").value.trim()) topForm.requestSubmit();
+        });
+    });
+
     // Auto-submit if phrase saved
     if (topForm.querySelector("[name=phrase]").value.trim()) {
         topForm.requestSubmit();
@@ -433,6 +440,9 @@ if (dynForm) {
 
     setDefaultDates(true);
     dynForm.querySelector("[name=period]").addEventListener("change", () => setDefaultDates());
+    dynForm.querySelector("[name=devices]").addEventListener("change", () => {
+        if (dynForm.querySelector("[name=phrase]").value.trim()) submitDynamics();
+    });
 
     async function submitDynamics() {
         const fd = new FormData(dynForm);
@@ -666,6 +676,13 @@ if (regForm) {
             hideLoading();
             regForm.querySelector("button").disabled = false;
         }
+    });
+
+    // Auto-submit on filter change
+    regForm.querySelectorAll(".custom-select input[type=hidden]").forEach(el => {
+        el.addEventListener("change", () => {
+            if (regForm.querySelector("[name=phrase]").value.trim()) regForm.requestSubmit();
+        });
     });
 
     // Sorting
